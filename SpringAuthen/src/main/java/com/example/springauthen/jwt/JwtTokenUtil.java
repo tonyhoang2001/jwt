@@ -1,9 +1,7 @@
 package com.example.springauthen.jwt;
 
 import com.example.springauthen.user.api.User;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,18 +32,30 @@ public class JwtTokenUtil {
     public boolean validateAccessToken(String token) {
         try {
             Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
+            return true;
         } catch (ExpiredJwtException e) {
             LOGGER.error("JWT expired", e);
         } catch (IllegalArgumentException e){
             LOGGER.error("Token is null, empty or has only whitespace",e);
-        } catch (ExpiredJwtException e) {
-            LOGGER.error("JWT expired", e);
-        } catch (IllegalArgumentException e){
-            LOGGER.error("Token is null, empty or has only whitespace",e);
-        } catch (ExpiredJwtException e) {
-            LOGGER.error("JWT expired", e);
+        } catch (MalformedJwtException e) {
+            LOGGER.error("JWT is invalid", e);
+        } catch (UnsupportedJwtException e){
+            LOGGER.error("JWT is not supported",e);
+        } catch (SignatureException e) {
+            LOGGER.error("Signature validation failed", e);
         }
         return false;
+    }
+
+    public String getSubject(String token){
+        return parseClaims(token).getSubject();
+    }
+
+    private Claims parseClaims(String token){
+        return Jwts.parser()
+                .setSigningKey(secretKey)
+                .parseClaimsJws(token)
+                .getBody();
     }
 
 }
