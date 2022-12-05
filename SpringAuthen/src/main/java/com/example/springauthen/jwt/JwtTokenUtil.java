@@ -2,6 +2,7 @@ package com.example.springauthen.jwt;
 
 import com.example.springauthen.user.api.User;
 import io.jsonwebtoken.*;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 import java.util.Date;
 
 @Component
+@Slf4j
 public class JwtTokenUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(JwtTokenUtil.class);
 
@@ -22,6 +24,8 @@ public class JwtTokenUtil {
         return Jwts
                 .builder()
                 .setSubject(user.getId() + ", " + user.getUsername())
+                .setAudience("abc")
+                .setId("23232323")
                 .setIssuer("Tony")
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRE_DURATION))
@@ -35,27 +39,29 @@ public class JwtTokenUtil {
             return true;
         } catch (ExpiredJwtException e) {
             LOGGER.error("JWT expired", e);
-        } catch (IllegalArgumentException e){
-            LOGGER.error("Token is null, empty or has only whitespace",e);
+        } catch (IllegalArgumentException e) {
+            LOGGER.error("Token is null, empty or has only whitespace", e);
         } catch (MalformedJwtException e) {
             LOGGER.error("JWT is invalid", e);
-        } catch (UnsupportedJwtException e){
-            LOGGER.error("JWT is not supported",e);
+        } catch (UnsupportedJwtException e) {
+            LOGGER.error("JWT is not supported", e);
         } catch (SignatureException e) {
             LOGGER.error("Signature validation failed", e);
         }
         return false;
     }
 
-    public String getSubject(String token){
-        return parseClaims(token).getSubject();
+    public String getSubject(String token) {
+        String subject = parseClaims(token).getSubject();
+        return subject;
     }
 
-    private Claims parseClaims(String token){
-        return Jwts.parser()
+    private Claims parseClaims(String token) {
+        Claims claims = Jwts.parser()
                 .setSigningKey(secretKey)
                 .parseClaimsJws(token)
                 .getBody();
+        return claims;
     }
 
 }
