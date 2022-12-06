@@ -1,5 +1,6 @@
 package com.example.springauthen.jwt;
 
+import com.example.springauthen.user.api.Role;
 import com.example.springauthen.user.api.User;
 import io.jsonwebtoken.*;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.Iterator;
 
 @Component
 @Slf4j
@@ -21,11 +23,17 @@ public class JwtTokenUtil {
     private String secretKey;
 
     public String generateAccessToken(User user) {
+
+        Iterator<Role> iterator = user.getRoles().iterator();
+        String roles = "";
+        while (iterator.hasNext()) {
+            roles += iterator.next().getName() + ",";
+        }
+
         return Jwts
                 .builder()
                 .setSubject(user.getId() + ", " + user.getUsername())
-                .setAudience("abc")
-                .setId("23232323")
+                .claim("role", roles)
                 .setIssuer("Tony")
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRE_DURATION))
@@ -56,7 +64,7 @@ public class JwtTokenUtil {
         return subject;
     }
 
-    private Claims parseClaims(String token) {
+    public Claims parseClaims(String token) {
         Claims claims = Jwts.parser()
                 .setSigningKey(secretKey)
                 .parseClaimsJws(token)

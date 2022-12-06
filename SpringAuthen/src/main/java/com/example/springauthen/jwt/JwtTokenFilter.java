@@ -1,11 +1,11 @@
 package com.example.springauthen.jwt;
 
+import com.example.springauthen.user.api.Role;
 import com.example.springauthen.user.api.User;
+import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -53,7 +53,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         UserDetails userDetails = getUserDetails(accessToken);
 
         UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(userDetails, null, null);
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -61,9 +61,20 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
     private UserDetails getUserDetails(String accessToken) {
         User userDetails = new User();
-        String[] subjectArray = jwtTokenUtil.getSubject(accessToken).split(", ");
+        Claims claims = jwtTokenUtil.parseClaims(accessToken);
+
+        String claimRoles = claims.get("role").toString();
+        String[] roles = claimRoles.substring(0, claimRoles.length() - 1).split(",");
+        for (String roleName : roles) {
+            userDetails.getRoles().add(new Role(roleName));
+        }
+
+        String subject = (String) claims.get(Claims.SUBJECT);
+        String[] subjectArray = subject.split(", ");
+
         userDetails.setId(Integer.parseInt(subjectArray[0]));
         userDetails.setUsername(subjectArray[1]);
+
         return userDetails;
     }
 
